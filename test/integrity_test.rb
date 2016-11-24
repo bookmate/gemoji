@@ -7,6 +7,11 @@ unless images_extracted = File.directory?(File.join(Emoji.images_path, 'unicode'
 end
 
 class IntegrityTest < TestCase
+
+  test "work with multithread"
+    Thread.new {10000.times {Emoji.find_by_unicode 't'}}
+    assert_equal Emoji.find_by_unicode('t'), nil
+  end
   test "images on disk correlate 1-1 with emojis" do
     images_on_disk = Dir["#{Emoji.images_path}/**/*.png"].map {|f| f.sub(Emoji.images_path, '') }
     expected_images = Emoji.all.map { |emoji| '/%s' % emoji.image_filename }
