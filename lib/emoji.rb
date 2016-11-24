@@ -1,5 +1,5 @@
 # encoding: utf-8
-require 'emoji/character'
+require_relative 'emoji/character'
 require 'json'
 
 module Emoji
@@ -63,12 +63,16 @@ module Emoji
 
   # Public: Find an emoji by its aliased name. Return nil if missing.
   def find_by_alias(name)
-    names_index[name]
+    @mutex.synchronize do
+      names_index[name]
+    end
   end
 
   # Public: Find an emoji by its unicode character. Return nil if missing.
   def find_by_unicode(unicode)
-    unicodes_index[unicode]
+    @mutex.synchronize do
+      unicodes_index[unicode]
+    end
   end
 
   private
@@ -76,6 +80,7 @@ module Emoji
     ZERO_WIDTH_JOINER = "\u{200d}".freeze
     FEMALE_SYMBOL = "\u{2640}".freeze
     MALE_SYMBOL = "\u{2642}".freeze
+    @mutex = Mutex.new
 
     # Chars from Apple's palette which must have VARIATION_SELECTOR_16 to render:
     TEXT_GLYPHS = ["🈷", "🈂", "🅰", "🅱", "🅾", "©", "®", "™", "〰"].freeze
