@@ -1,5 +1,5 @@
 # encoding: utf-8
-require_relative 'emoji/character'
+require 'emoji/character'
 require 'json'
 
 module Emoji
