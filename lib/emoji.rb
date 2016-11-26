@@ -18,10 +18,12 @@ module Emoji
   end
 
   def all
-    return @all if defined? @all
-    @all = []
-    parse_data_file
-    @all
+    @mutex.synchronize do
+      return @all if defined? @all
+      @all = []
+      parse_data_file
+      @all
+    end
   end
 
   def apple_palette
@@ -39,7 +41,11 @@ module Emoji
   # The character is added to the `Emoji.all` set.
   def create(name)
     emoji = Emoji::Character.new(name)
-    self.all << edit_emoji(emoji) { yield emoji if block_given? }
+    if defined? @all
+      @all << edit_emoji(emoji) { yield emoji if block_given? }
+    else
+      self.all << edit_emoji(emoji) { yield emoji if block_given? }
+    end
     emoji
   end
 
@@ -63,16 +69,12 @@ module Emoji
 
   # Public: Find an emoji by its aliased name. Return nil if missing.
   def find_by_alias(name)
-    @mutex.synchronize do
-      names_index[name]
-    end
+    names_index[name]
   end
 
   # Public: Find an emoji by its unicode character. Return nil if missing.
   def find_by_unicode(unicode)
-    @mutex.synchronize do
-      unicodes_index[unicode]
-    end
+    unicodes_index[unicode]
   end
 
   private
@@ -109,7 +111,7 @@ module Emoji
         next unless raw
         no_gender = raw.sub(/(#{VARIATION_SELECTOR_16})?#{ZERO_WIDTH_JOINER}(#{FEMALE_SYMBOL}|#{MALE_SYMBOL})/, '')
         next unless $2
-        edit_emoji(unicodes_index[no_gender]) do |emoji|
+        edit_emoji(@unicodes_index[no_gender]) do |emoji|
           emoji.add_unicode_alias(
             $2 == FEMALE_SYMBOL ?
               raw.sub(FEMALE_SYMBOL, MALE_SYMBOL) :
@@ -120,12 +122,12 @@ module Emoji
     end
 
     def names_index
-      all unless defined? @all
+      all
       @names_index
     end
 
     def unicodes_index
-      all unless defined? @all
+      all
       @unicodes_index
     end
 end
